@@ -6,6 +6,14 @@ var moment = require('moment');
 var assign = require('object-assign');
 
 module.exports = function (req, res, next) {
+	try {
+		if(process.env.AdminDownload.slice(',').indexOf(req.user.email) === -1){
+			return res.status(402).json('not permission');	
+		}
+		
+	} catch (error) {
+		return res.status(402).json('not permission');	
+	}
 	var baby = require('babyparse');
 	var keystone = req.keystone;
 

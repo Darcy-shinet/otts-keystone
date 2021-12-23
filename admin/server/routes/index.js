@@ -4,7 +4,7 @@ var path = require('path');
 
 var templatePath = path.resolve(__dirname, '../templates/index.html');
 
-module.exports = function IndexRoute (req, res) {
+module.exports = async function IndexRoute (req, res) {
 	var keystone = req.keystone;
 	var lists = {};
 	_.forEach(keystone.lists, function (list, key) {
@@ -23,7 +23,6 @@ module.exports = function IndexRoute (req, res) {
 		// but if it's undefined, default it to "/"
 		backUrl = '/';
 	}
-
 	var keystoneData = {
 		adminPath: '/' + keystone.get('admin path'),
 		appversion: keystone.get('appversion'),
@@ -33,11 +32,16 @@ module.exports = function IndexRoute (req, res) {
 		devMode: !!process.env.KEYSTONE_DEV,
 		lists: lists,
 		nav: keystone.nav,
+		// newNav: newNavMenu,
 		orphanedLists: orphanedLists,
 		signoutUrl: keystone.get('signout url'),
 		user: {
 			id: req.user.id,
 			name: UserList.getDocumentName(req.user) || '(no name)',
+			roule: await getRole(req.user),
+			superAdmin: req.user.superAdmin,
+			email: req.user.email,
+			downloadEmail: process.env.AdminDownload ? process.env.AdminDownload : '',
 		},
 		userList: UserList.key,
 		version: keystone.version,
@@ -86,8 +90,10 @@ module.exports = function IndexRoute (req, res) {
 		};
 		locals.cloudinaryScript = cloudinary.cloudinary_js_config();
 	};
-
+	// let role = await getRole(req.user);
+	// keystoneData.nav = getNav(keystone.nav, role)
 	ejs.renderFile(templatePath, locals, { delimiter: '%' }, function (err, str) {
+
 		if (err) {
 			console.error('Could not render Admin UI Index Template:', err);
 			return res.status(500).send(keystone.wrapHTMLError('Error Rendering Admin UI', err.message));
@@ -95,3 +101,30 @@ module.exports = function IndexRoute (req, res) {
 		res.send(str);
 	});
 };
+
+function getRole(user){
+	return new Promise(function(resove, reject){
+		keystone.list('Role').model.findOne({_id: user.roles}).exec((err, result) => {
+			if(result){
+				resove(result.permission);
+			} else {
+				resove(false);	
+			}
+		})
+	})
+}
+
+// function getNav(nav, permission){
+// 	let newNav = nav
+// 	newNav.sections.forEach((item, index) => {
+// 		let newItem = item.lists.filter((menu) => {
+// 			return permission.indexOf(menu.path) !== -1;
+// 		})
+// 		newNav.sections[index].lists = newItem;
+// 	})
+// 	let navList = newNav.sections.filter((item) => {
+// 		return item.lists.length > 0;
+// 	})
+// 	newNav.sections = navList;
+// 	return newNav;
+// }

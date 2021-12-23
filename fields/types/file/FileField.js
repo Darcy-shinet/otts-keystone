@@ -53,9 +53,15 @@ module.exports = Field.create({
 	},
 	componentWillUpdate (nextProps) {
 		// Show the new filename when it's finished uploading
-		if (this.props.value.filename !== nextProps.value.filename) {
-			this.setState(buildInitialState(nextProps));
+		if (this.props.value) {
+			if (this.props.value.filename !== nextProps.value.filename) {
+				this.setState(buildInitialState(nextProps));
+			}
 		}
+		// 	if (this.props.value.filename !== nextProps.value.filename) {
+		// 		this.setState(buildInitialState(nextProps));
+		// 	}
+		// },
 	},
 
 	// ==============================

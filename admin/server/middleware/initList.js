@@ -8,5 +8,22 @@ module.exports = function initList (req, res, next) {
 		req.flash('error', 'List ' + req.params.list + ' could not be found.');
 		return res.redirect('/' + keystone.get('admin path'));
 	}
-	next();
+	// next();
+	if(req.user.superAdmin || req.list.options.hidden){
+		next();
+	} else {
+		keystone.list('Role').model.findOne({_id: req.user.roles}).exec((err, result) => {
+			if(result){
+				if(result.permission && result.permission.length > 0 && result.permission.indexOf(req.list.path) !== -1){
+					next();
+				} else {
+					return res.status(404).json({ error: 'insufficient permissions' });
+				}
+			} else {
+				req.flash('error', 'insufficient permissions.');
+				return res.redirect('/' + keystone.get('admin path'));
+			}
+		})
+	}
+
 };

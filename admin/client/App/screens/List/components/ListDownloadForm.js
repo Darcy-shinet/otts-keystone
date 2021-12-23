@@ -144,7 +144,16 @@ var ListDownloadForm = React.createClass({
 	},
 	render () {
 		const { useCurrentColumns } = this.state;
-
+		if(!Keystone.user || !Keystone.user.email || !Keystone.user.downloadEmail){
+			return (<div></div>);
+		}
+		try {
+			if(Keystone.user.downloadEmail.split(',').indexOf(Keystone.user.email) === -1){
+				return (<div></div>);
+			}
+		} catch (error) {
+			return (<div></div>);
+		}
 		return (
 			<div>
 				<ListHeaderButton
